@@ -1,0 +1,17 @@
+# ── Personal family data — never leaves this machine ──────────────
+family/
+systems/
+logs/
+plans/
+inbox.md
+
+# Generated calendar exports
+*.ics
+
+# OS noise
+.DS_Store
+Thumbs.db
+
+# Local Claude Code state (keep .claude/commands tracked)
+.claude/*
+!.claude/commands/
