@@ -6,6 +6,15 @@ family_name:
 location:            # city/area — used for local research, never full address
 review_day:          # e.g., Sunday 7:30pm
 
+avatar:              # the assistant's dashboard face
+  style:             # classic | sprout | spark | bow | glasses
+  color:             # blue | aqua | violet | magenta | orange — or any hex
+
+integrations:        # connected | fallback | pending (see INTEGRATIONS.md)
+  google_calendar:
+  gmail:
+  web_search:
+
 enabled_modules:
   # exact filenames from capabilities/, without .md — e.g.:
   # - calendar-email

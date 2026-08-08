@@ -27,10 +27,13 @@ folder), the two-habit promise (inbox + one weekly review), and that questions
 come in short batches with skip always allowed.
 
 Ask:
-1. **What should we call your assistant?" Offer ~5 varied suggestions (e.g.,
+1. **What should we call your assistant?** Offer ~5 varied suggestions (e.g.,
    Jeeves, Marlo, Birdie, Atlas, Pip) plus "just 'Assistant' is fine."
-2. What's your family name, or how should I refer to your household?
-3. What city/area are you in? (Powers local suggestions — approximate is fine.)
+2. Pick your assistant's look for the dashboard: a style (classic / sprout /
+   spark / bow / glasses) and a color (blue / aqua / violet / magenta /
+   orange). Default if they shrug: classic + blue.
+3. What's your family name, or how should I refer to your household?
+4. What city/area are you in? (Powers local suggestions — approximate is fine.)
 
 ## Phase 2 — The people
 
@@ -87,7 +90,18 @@ rest ask their questions during your first weekly reviews instead?" (If yes,
 mark deferred modules `pending-intake` in config — ask their questions
 opportunistically later.)
 
-## Phase 5 — Build the workspace
+## Phase 5 — Connect your tools (integrations)
+
+Walk through INTEGRATIONS.md, but only the rows relevant to their chosen
+modules (Google Calendar for nearly everyone; Gmail if they chose Calendar &
+Email; web search for Local Events / Outings & Travel; others only if asked).
+For each one: a single line on what it unlocks and its fallback, then
+"connect now, later, or skip?" If now — guide the connection step by step in
+Claude Code, run a harmless read test (list calendars, count threads), and
+record the result under `integrations:` in config. **Never pressure**: the
+fallbacks are genuinely good, and `/connect` exists for later.
+
+## Phase 6 — Build the workspace
 
 Create, using `templates/` for shapes:
 
@@ -103,9 +117,12 @@ Create, using `templates/` for shapes:
 - [ ] `inbox.md` — friendly 3-line header explaining capture.
 - [ ] `logs/weekly-review.md` and `logs/decisions.md` — headers plus a first
       entry: "‹date›: Setup completed. Modules enabled: …"
+- [ ] `dashboard/dashboard.html` — render it per dashboard/README.md so the
+      visual dashboard is alive from day one (avatar, enabled modules, first
+      cadences already showing).
 - [ ] Delete `family/setup-progress.md`.
 
-## Phase 6 — Graduation
+## Phase 7 — Graduation
 
 1. Ask which day/time they want the weekly review (default: Sunday evening). If
    a calendar connector is live, offer to add a recurring reminder (confirm
@@ -122,5 +139,6 @@ Your whole job from now on:
   2. Once a week        →  /weekly-review          (~15 min, ‹day› ‹time›)
 
 Anytime:  /status  ·  /plan ‹thing›  ·  /meal-cycle  ·  "do this now: …"
-Add powers later: "enable ‹module›" — full list in capabilities/
+Prefer visuals?  →  open dashboard/dashboard.html   (refresh: /dashboard)
+Add powers later: "enable ‹module›" · connect tools anytime: /connect
 ```

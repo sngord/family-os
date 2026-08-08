@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Family OS — Dashboard</title>
+<style>
+  /* ─── Design tokens (light default, dark via media query + data-theme override) ─── */
+  :root {
+    color-scheme: light;
+    --page:        #f9f9f7;
+    --surface:     #fcfcfb;
+    --surface-2:   #f0efec;
+    --ink:         #0b0b0b;
+    --ink-2:       #52514e;
+    --ink-3:       #898781;
+    --border:      rgba(11,11,11,0.10);
+    --hairline:    #e1e0d9;
+    --good:        #0ca30c;
+    --warning:     #fab219;
+    --serious:     #ec835a;
+    --accent:      #2a78d6;      /* set from data at boot */
+    --accent-ink:  #ffffff;
+    --shadow:      0 1px 2px rgba(11,11,11,.04), 0 8px 24px -12px rgba(11,11,11,.12);
+    --shadow-lift: 0 2px 4px rgba(11,11,11,.05), 0 14px 32px -12px rgba(11,11,11,.18);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --page:      #0d0d0d;
+      --surface:   #1a1a19;
+      --surface-2: #242422;
+      --ink:       #ffffff;
+      --ink-2:     #c3c2b7;
+      --ink-3:     #898781;
+      --border:    rgba(255,255,255,0.10);
+      --hairline:  #2c2c2a;
+      --shadow:      0 1px 2px rgba(0,0,0,.3), 0 8px 24px -12px rgba(0,0,0,.5);
+      --shadow-lift: 0 2px 4px rgba(0,0,0,.35), 0 14px 32px -12px rgba(0,0,0,.6);
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --page:      #0d0d0d;
+    --surface:   #1a1a19;
+    --surface-2: #242422;
+    --ink:       #ffffff;
+    --ink-2:     #c3c2b7;
+    --ink-3:     #898781;
+    --border:    rgba(255,255,255,0.10);
+    --hairline:  #2c2c2a;
+    --shadow:      0 1px 2px rgba(0,0,0,.3), 0 8px 24px -12px rgba(0,0,0,.5);
+    --shadow-lift: 0 2px 4px rgba(0,0,0,.35), 0 14px 32px -12px rgba(0,0,0,.6);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--page);
+    color: var(--ink);
+    line-height: 1.5;
+    font-size: 15px;
+  }
+  a { color: inherit; }
+  button { font: inherit; cursor: pointer; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+
+  /* ─── App shell ─── */
+  .app { display: grid; grid-template-columns: 268px minmax(0,1fr); min-height: 100vh; }
+
+  /* Sidebar */
+  .side {
+    position: sticky; top: 0; height: 100vh; overflow-y: auto;
+    display: flex; flex-direction: column;
+    background: var(--surface);
+    border-right: 1px solid var(--hairline);
+    padding: 20px 14px;
+  }
+  .brand { display: flex; align-items: center; gap: 12px; padding: 6px 8px 18px; }
+  .brand .who { min-width: 0; }
+  .brand .who b { display: block; font-size: 16px; letter-spacing: -0.01em; }
+  .brand .who span { display: block; font-size: 12.5px; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .navlabel { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-3); padding: 14px 10px 6px; }
+  .nav { display: flex; flex-direction: column; gap: 2px; }
+  .nav a {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 10px; border-radius: 10px;
+    text-decoration: none; color: var(--ink-2); font-weight: 500; font-size: 14px;
+  }
+  .nav a .em { width: 22px; text-align: center; font-size: 16px; }
+  .nav a:hover { background: var(--surface-2); color: var(--ink); }
+  .nav a[aria-current="page"] {
+    background: color-mix(in oklab, var(--accent) 12%, transparent);
+    color: var(--ink); font-weight: 600;
+  }
+  .nav a[aria-current="page"] .em { transform: scale(1.05); }
+  .side .foot { margin-top: auto; padding: 14px 8px 4px; border-top: 1px solid var(--hairline); display: flex; flex-direction: column; gap: 10px; }
+  .side .foot .meta { font-size: 11.5px; color: var(--ink-3); }
+  .themebtn {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--surface-2); color: var(--ink-2);
+    border: 1px solid var(--border); border-radius: 999px;
+    padding: 6px 12px; font-size: 12.5px; font-weight: 500; width: fit-content;
+  }
+  .themebtn:hover { color: var(--ink); }
+
+  /* Topbar (mobile) */
+  .topbar {
+    display: none; position: sticky; top: 0; z-index: 40;
+    align-items: center; gap: 12px;
+    background: var(--surface); border-bottom: 1px solid var(--hairline);
+    padding: 10px 14px;
+  }
+  .topbar b { font-size: 15px; }
+  .menubtn { background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; padding: 7px 11px; font-size: 16px; line-height: 1; color: var(--ink); }
+
+  /* Main */
+  .main { padding: 28px 36px 64px; max-width: 1060px; width: 100%; margin: 0 auto; }
+  .demo-banner {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    background: color-mix(in oklab, var(--warning) 16%, var(--surface));
+    border: 1px solid color-mix(in oklab, var(--warning) 45%, var(--border));
+    border-radius: 12px; padding: 10px 14px; margin-bottom: 22px;
+    font-size: 13.5px; color: var(--ink);
+  }
+  .demo-banner b { font-weight: 650; }
+
+  h1 { font-size: 26px; letter-spacing: -0.02em; margin: 0 0 4px; }
+  h2 { font-size: 15px; letter-spacing: -0.01em; margin: 0 0 12px; display: flex; align-items: center; gap: 8px; }
+  h2 .cnt { font-size: 12px; font-weight: 600; color: var(--ink-3); background: var(--surface-2); border-radius: 999px; padding: 1px 8px; }
+  .sub { color: var(--ink-2); font-size: 14.5px; margin: 0; }
+
+  .section { margin-top: 30px; }
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 18px; align-items: start; }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; padding: 18px; box-shadow: var(--shadow);
+  }
+
+  /* Hero (home) */
+  .hero { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; margin-bottom: 6px; }
+  .hero .avatar-lg { flex: 0 0 auto; filter: drop-shadow(0 6px 16px color-mix(in oklab, var(--accent) 30%, transparent)); }
+  .hero .hi { min-width: 240px; }
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 7px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 999px; padding: 5px 12px; font-size: 12.5px; font-weight: 550; color: var(--ink-2);
+  }
+  .chip .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+
+  .quick { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    border-radius: 10px; padding: 8px 14px; font-size: 13.5px; font-weight: 600;
+    border: 1px solid transparent; transition: transform .06s ease, box-shadow .12s ease;
+  }
+  .btn:active { transform: translateY(1px); }
+  .btn.primary { background: var(--accent); color: var(--accent-ink); box-shadow: var(--shadow); }
+  .btn.primary:hover { box-shadow: var(--shadow-lift); }
+  .btn.ghost { background: var(--surface); color: var(--ink); border-color: var(--border); }
+  .btn.ghost:hover { background: var(--surface-2); }
+  .btn .k { font-size: 11px; font-weight: 500; opacity: .75; background: rgba(0,0,0,.14); border-radius: 6px; padding: 1px 6px; }
+  .btn.ghost .k { background: var(--surface-2); color: var(--ink-2); }
+
+  /* Rows / lists */
+  .rows { display: flex; flex-direction: column; }
+  .row { display: flex; gap: 14px; padding: 11px 2px; border-top: 1px solid var(--hairline); align-items: baseline; }
+  .row:first-child { border-top: 0; }
+  .row .when {
+    flex: 0 0 92px; font-size: 12px; font-weight: 650; color: var(--accent);
+    font-variant-numeric: tabular-nums; padding-top: 1px;
+  }
+  .row .what { min-width: 0; flex: 1; }
+  .row .what b { font-weight: 600; font-size: 14px; display: inline; }
+  .row .what .d { color: var(--ink-2); font-size: 13px; margin-top: 1px; }
+  .row .tag {
+    flex: 0 0 auto; font-size: 11px; font-weight: 600; color: var(--ink-2);
+    background: var(--surface-2); border-radius: 999px; padding: 2px 9px; white-space: nowrap;
+  }
+
+  /* Attention list */
+  .attn .row { align-items: flex-start; }
+  .stat-dot { width: 8px; height: 8px; border-radius: 50%; flex: 0 0 auto; margin-top: 7px; }
+  .sev { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
+  .sev.warning { color: color-mix(in oklab, var(--warning) 65%, var(--ink)); }
+  .sev.serious { color: color-mix(in oklab, var(--serious) 75%, var(--ink)); }
+
+  /* Pillars */
+  .pillars { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
+  .pillar { border: 1px solid var(--border); border-radius: 13px; padding: 12px 13px; background: var(--surface); }
+  .pillar .top { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 13px; }
+  .pillar .top .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .pillar .st { font-size: 11px; font-weight: 650; text-transform: uppercase; letter-spacing: .05em; margin-left: auto; }
+  .pillar .note { font-size: 12.5px; color: var(--ink-2); margin-top: 5px; }
+  .healthy .dot { background: var(--good); } .healthy .st { color: var(--good); }
+  .quiet .dot { background: var(--warning); } .quiet .st { color: color-mix(in oklab, var(--warning) 65%, var(--ink)); }
+  .attention .dot { background: var(--serious); } .attention .st { color: color-mix(in oklab, var(--serious) 75%, var(--ink)); }
+
+  /* Module page */
+  .modhead { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .modhead .bigem {
+    font-size: 30px; width: 62px; height: 62px; display: grid; place-items: center;
+    background: color-mix(in oklab, var(--accent) 10%, var(--surface));
+    border: 1px solid var(--border); border-radius: 18px;
+  }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-top: 20px; }
+  .stat { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 14px 15px; box-shadow: var(--shadow); }
+  .stat .v { font-size: 22px; font-weight: 650; letter-spacing: -0.02em; line-height: 1.2; }
+  .stat .l { font-size: 12px; color: var(--ink-2); margin-top: 3px; }
+  .stat .s { font-size: 11.5px; color: var(--ink-3); margin-top: 1px; }
+
+  .kv { display: grid; grid-template-columns: max-content 1fr; gap: 7px 18px; font-size: 13.5px; }
+  .kv .k { color: var(--ink-2); }
+  .kv .v { font-weight: 550; min-width: 0; }
+
+  details.past { margin-top: 18px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); }
+  details.past summary {
+    cursor: pointer; padding: 13px 16px; font-weight: 600; font-size: 14px;
+    list-style: none; display: flex; align-items: center; gap: 8px;
+  }
+  details.past summary::-webkit-details-marker { display: none; }
+  details.past summary .tw { transition: transform .15s ease; color: var(--ink-3); }
+  details.past[open] summary .tw { transform: rotate(90deg); }
+  details.past .inner { padding: 0 16px 12px; }
+
+  .empty { color: var(--ink-3); font-size: 13.5px; padding: 14px 2px; }
+  .empty b { color: var(--ink-2); font-weight: 600; }
+
+  /* Add-capabilities page */
+  .addgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px; }
+  .addcard { display: flex; flex-direction: column; gap: 8px; }
+  .addcard .h { display: flex; align-items: center; gap: 10px; font-weight: 650; font-size: 14.5px; }
+  .addcard .b { font-size: 13px; color: var(--ink-2); flex: 1; }
+
+  /* Toast */
+  #toast {
+    position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%) translateY(16px);
+    background: var(--ink); color: var(--page);
+    border-radius: 999px; padding: 9px 18px; font-size: 13.5px; font-weight: 550;
+    opacity: 0; pointer-events: none; transition: opacity .18s ease, transform .18s ease;
+    box-shadow: var(--shadow-lift); z-index: 90; max-width: min(92vw, 480px); text-align: center;
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* Feed */
+  .feed .row .when { color: var(--ink-3); font-weight: 550; }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    .app { grid-template-columns: 1fr; }
+    .topbar { display: flex; }
+    .side {
+      position: fixed; z-index: 50; inset: 0 26% 0 0; height: 100vh;
+      transform: translateX(-102%); transition: transform .2s ease;
+      box-shadow: var(--shadow-lift); min-width: 250px;
+    }
+    .side.open { transform: translateX(0); }
+    .scrim { position: fixed; inset: 0; background: rgba(0,0,0,.35); z-index: 45; opacity: 0; pointer-events: none; transition: opacity .2s; }
+    .scrim.show { opacity: 1; pointer-events: auto; }
+    .main { padding: 20px 16px 56px; }
+    .row .when { flex-basis: 78px; }
+  }
+</style>
+</head>
+<body>
+
+<script>
+/*FAMILY-OS-DATA-START*/
+/* SAMPLE DATA — a fictional family, shipped so the template previews nicely.
+   Your assistant replaces everything between the START/END markers with your
+   real data (and sets demo:false) when it renders dashboard/dashboard.html.
+   Schema reference: dashboard/README.md */
+window.FAMILY_OS_DATA = {
+  "demo": true,
+  "generated": "Sunday, Aug 2 · 7:58 PM",
+  "assistant": { "name": "Birdie", "tagline": "Your family's chief of staff", "avatar": { "style": "sprout", "color": "aqua" } },
+  "family_name": "The Harper Family",
+  "next_review": "Sunday · 7:30 PM",
+  "inbox_count": 4,
+  "quick_actions": [
+    { "label": "Run weekly review", "prompt": "/weekly-review" },
+    { "label": "Capture a thought", "prompt": "/capture " },
+    { "label": "What's the status?", "prompt": "/status" }
+  ],
+  "home": {
+    "headline": "Two prep windows opened this week — both are queued for Sunday's review.",
+    "needs_attention": [
+      { "severity": "serious", "title": "Fall soccer registration opens Wed, Aug 12 · 9:00 AM", "deadline": "Spots go in ~2 days", "action": "I've shortlisted the U8 rec league — say the word Wednesday morning and I'll hand you the filled-out details.", "prompt": "status of soccer registration" },
+      { "severity": "warning", "title": "Cabin weekend: book by Aug 15 for Labor Day", "deadline": "1 week left in window", "action": "Three cabin options are in your review queue with prices.", "prompt": "/plan Labor Day cabin weekend" }
+    ],
+    "up_next": [
+      { "date": "Sat · Aug 8", "title": "Farmers market + splash pad morning", "module": "Local Events", "detail": "Leave by 9:15 to beat the heat — stroller-friendly, $0" },
+      { "date": "Sat · Aug 8", "title": "Date night: Luca's patio, 7:00 PM", "module": "Couple Time", "detail": "Sitter confirmed (Maya, 6:30–10:30) · reservation under Harper" },
+      { "date": "Tue · Aug 11", "title": "Grocery order arrives 4–6 PM", "module": "Meals", "detail": "Week 2 rotation · 41 items · make-ahead: chili base" },
+      { "date": "Wed · Aug 12", "title": "⚡ Soccer registration opens 9:00 AM", "module": "Kids", "detail": "Calendar block set · form details ready to paste" },
+      { "date": "Sun · Aug 16", "title": "Weekly review", "module": "Ritual", "detail": "15 min · 4 inbox items waiting" }
+    ],
+    "pillars": [
+      { "name": "Couple & Partnership", "status": "healthy", "note": "Date night Sat · next home-date Aug 21" },
+      { "name": "Family Quality Time", "status": "healthy", "note": "Market Sat · cabin weekend planning" },
+      { "name": "1:1 Parent–Child", "status": "quiet", "note": "Dad + Nora last did solo time Jul 6 — idea queued" },
+      { "name": "Health & Fitness", "status": "healthy", "note": "5 of 6 workout blocks kept in July" },
+      { "name": "Traditions & Rituals", "status": "healthy", "note": "State-fair tradition set for Sep 5" },
+      { "name": "Principles & Character", "status": "quiet", "note": "Draft list at 4 phrases — 2-min prompt queued" },
+      { "name": "Home & Logistics", "status": "healthy", "note": "Rotation humming · filters due Sep 1" }
+    ],
+    "recent": [
+      { "date": "Aug 2", "text": "Weekly review: 6 inbox items triaged, 3 plans approved, campsite shortlist requested" },
+      { "date": "Aug 1", "text": "Captured: “Theo keeps asking about dinosaurs” → gift file + museum idea queued" },
+      { "date": "Jul 29", "text": "Swapped Thu dinner to leftovers night — grocery list adjusted automatically" },
+      { "date": "Jul 27", "text": "Booked: dentist checkups for both kids, Aug 19 · 3:30 & 4:00 PM" }
+    ]
+  },
+  "modules": [
+    {
+      "id": "calendar-email", "emoji": "📅", "name": "Calendar & Email",
+      "status_line": "Google Calendar connected · email sweep runs with each review",
+      "stats": [
+        { "value": "12", "label": "events next 2 weeks", "sub": "0 conflicts" },
+        { "value": "3", "label": "dates caught in email", "sub": "this month" },
+        { "value": "100%", "label": "events with logistics", "sub": "address + notes inside" }
+      ],
+      "upcoming": [
+        { "date": "Sat · Aug 8", "title": "Date night 7 PM", "detail": "Sitter + reservation in event notes" },
+        { "date": "Wed · Aug 12", "title": "Soccer reg opens", "detail": "9:00 AM calendar block with checklist" },
+        { "date": "Wed · Aug 19", "title": "Kids' dentist", "detail": "3:30 Nora · 4:00 Theo · insurance card note attached" }
+      ],
+      "recent": [
+        { "date": "Aug 2", "title": "Weekly agenda reviewed", "detail": "Next 2 weeks clean; one overlap resolved (moved gym block)" },
+        { "date": "Jul 31", "title": "Email sweep", "detail": "Caught school supply-drop date buried in PTA newsletter → calendar" }
+      ],
+      "history": [
+        { "date": "Jul 20", "title": "Recurring events tuned", "detail": "Swim lessons recurrence corrected to skip holiday weekend" },
+        { "date": "Jul 13", "title": "Email sweep", "detail": "RSVP deadline for the Nguyen party → reminder 3 days ahead" },
+        { "date": "Jul 6", "title": "Camp forms deadline caught", "detail": "Health form submitted 5 days early" }
+      ],
+      "details": [
+        { "k": "Source of truth", "v": "\"Harper Family\" Google Calendar" },
+        { "k": "Also reading", "v": "Alex's work calendar (busy/free only)" },
+        { "k": "Email senders watched", "v": "school, daycare, Coach Rivera, pediatric dentist" },
+        { "k": "Send policy", "v": "Drafts only — nothing sends without you" }
+      ],
+      "actions": [
+        { "label": "What's coming up?", "prompt": "what's coming up?" },
+        { "label": "Add an event", "prompt": "add to calendar: " }
+      ]
+    },
+    {
+      "id": "meals-groceries", "emoji": "🍝", "name": "Meals & Groceries",
+      "status_line": "Week 2 of rotation · next grocery order Tue, Aug 11",
+      "stats": [
+        { "value": "Wk 2", "label": "rotation position", "sub": "of 2-week cycle" },
+        { "value": "41", "label": "items on next list", "sub": "≈ $118 est." },
+        { "value": "1", "label": "new recipe this cycle", "sub": "sheet-pan gnocchi" }
+      ],
+      "upcoming": [
+        { "date": "Mon · Aug 10", "title": "Menu confirm (30 sec)", "detail": "Reply 'looks good' or swap any night" },
+        { "date": "Tue · Aug 11", "title": "Grocery order arrives", "detail": "Paste-ready list generated Monday" },
+        { "date": "Sun · Aug 16", "title": "Make-ahead: chili base", "detail": "25 min → covers Wed dinner + 2 lunches" }
+      ],
+      "recent": [
+        { "date": "Jul 29", "title": "Thursday swapped to leftovers", "detail": "List auto-adjusted, −$14" },
+        { "date": "Jul 27", "title": "New recipe verdict: keeper", "detail": "Crispy tofu bowls → added to bank (kid-approved: Nora yes, Theo partial)" }
+      ],
+      "history": [
+        { "date": "Jul 13", "title": "Cycle 8 grocery list", "detail": "43 items · $124 · zero midweek store runs" },
+        { "date": "Jun 29", "title": "Summer rotation refresh", "detail": "3 soups out, grill nights in" },
+        { "date": "Jun 15", "title": "Retired: stuffed peppers", "detail": "Vetoed 3 times running — replaced with fajita night" }
+      ],
+      "details": [
+        { "k": "Meal bank", "v": "24 dinners (18 kid-approved)" },
+        { "k": "Weeknight budget", "v": "30 minutes max" },
+        { "k": "Hard rules", "v": "No shellfish (Theo allergy — flagged on every list)" },
+        { "k": "Store", "v": "Instacart · Fred's Market" }
+      ],
+      "actions": [
+        { "label": "Run meal cycle", "prompt": "/meal-cycle" },
+        { "label": "Swap a dinner", "prompt": "swap " }
+      ]
+    },
+    {
+      "id": "kids-activities", "emoji": "🎒", "name": "Kids' Activities",
+      "status_line": "1 registration window opening · sitter roster fresh",
+      "stats": [
+        { "value": "2", "label": "active signups tracked", "sub": "soccer · swim" },
+        { "value": "3", "label": "sitters on roster", "sub": "last refreshed Jul" },
+        { "value": "Age 4", "label": "next unlock: Theo", "sub": "pre-K soccer in March" }
+      ],
+      "upcoming": [
+        { "date": "Wed · Aug 12", "title": "⚡ Fall soccer registration", "detail": "Opens 9:00 AM — U8 rec league shortlisted, details ready to paste" },
+        { "date": "Mon · Aug 24", "title": "Swim level 3 assessment", "detail": "Nora · Oakwood pool · towel + goggles" }
+      ],
+      "recent": [
+        { "date": "Aug 1", "title": "Season preview: fall", "detail": "Soccer + swim continue; gymnastics parked until spring (your call from review)" },
+        { "date": "Jul 18", "title": "Sitter roster refreshed", "detail": "Maya's new rate noted; added Jordan (Sunday availability)" }
+      ],
+      "history": [
+        { "date": "Jun 20", "title": "Summer camp week booked", "detail": "Nature camp Jul 21–25 — registered 4 min after open" },
+        { "date": "May 30", "title": "Swim level 2 → passed", "detail": "Certificate filed; level 3 auto-queued" }
+      ],
+      "details": [
+        { "k": "Nora (6)", "v": "Swim Mon 4:15 · soccer starting Sep" },
+        { "k": "Theo (3)", "v": "Toddler gym Sat 9:00" },
+        { "k": "Load rule", "v": "Max 2 activities per kid per season" },
+        { "k": "Backup care", "v": "Grandma Tue/Thu · Maya on-call" }
+      ],
+      "actions": [
+        { "label": "Book a sitter", "prompt": "book a sitter for " },
+        { "label": "What can the kids start now?", "prompt": "what can the kids start now?" }
+      ]
+    },
+    {
+      "id": "local-events", "emoji": "🎪", "name": "Local Events",
+      "status_line": "This weekend's picks are in · 2 seasonal one-offs on radar",
+      "stats": [
+        { "value": "3", "label": "picks this week", "sub": "1 free" },
+        { "value": "8", "label": "loved-it log entries", "sub": "since spring" },
+        { "value": "2", "label": "on seasonal radar", "sub": "state fair · u-pick peaches" }
+      ],
+      "upcoming": [
+        { "date": "Sat · Aug 8", "title": "Farmers market + splash pad", "detail": "9:15 departure beats heat + parking · $0" },
+        { "date": "Sat · Aug 15", "title": "Peach u-pick at Hollis Farm", "detail": "Morning slot · ~$22 · pairs with pie make-ahead" },
+        { "date": "Sep 5", "title": "State fair (tradition candidate)", "detail": "Early entry tickets on sale Aug 20 — hold set" }
+      ],
+      "recent": [
+        { "date": "Aug 2", "title": "Weekend picks delivered", "detail": "3 options; you took the market (logged 👍)" },
+        { "date": "Jul 26", "title": "Outdoor movie night", "detail": "Loved it — auto-added to next-summer radar" }
+      ],
+      "history": [
+        { "date": "Jul 12", "title": "Library dino day", "detail": "Theo's favorite outing of the month" },
+        { "date": "Jun 28", "title": "Creek trail hike", "detail": "Too long for Theo — noted: cap hikes at 2 miles for now" }
+      ],
+      "details": [
+        { "k": "Radius", "v": "30 min drive" },
+        { "k": "Taste profile", "v": "markets 👍 · nature 👍 · big crowds 👎" },
+        { "k": "Memberships", "v": "Zoo (expires Nov — renewal reminder set)" }
+      ],
+      "actions": [
+        { "label": "What's happening this weekend?", "prompt": "what's happening this weekend?" }
+      ]
+    },
+    {
+      "id": "outings-travel", "emoji": "⛺", "name": "Outings & Travel",
+      "status_line": "Labor Day cabin in booking window · fall camping scouted",
+      "stats": [
+        { "value": "Aug 15", "label": "cabin booking deadline", "sub": "3 options shortlisted" },
+        { "value": "Oct 3–5", "label": "fall camping target", "sub": "reserve by Sep 3" },
+        { "value": "v4", "label": "packing list version", "sub": "improved after July trip" }
+      ],
+      "upcoming": [
+        { "date": "by Aug 15", "title": "Choose Labor Day cabin", "detail": "Pinecrest $310 · Lakeview $280 · Ridge A-frame $340 — full comparison in plans/" },
+        { "date": "Aug 20", "title": "Fall campsite shortlist arrives", "detail": "3 sites matched to 'quiet + creek access' preference" }
+      ],
+      "recent": [
+        { "date": "Jul 28", "title": "July camping debrief", "detail": "Packing list v4: +headlamps for kids, −pack-n-play (Theo graduated)" },
+        { "date": "Jul 21", "title": "Trip photos reminder sent", "detail": "Shared album link added to trip log" }
+      ],
+      "history": [
+        { "date": "Jul 18–20", "title": "Cedar Hollow camping", "detail": "9/10 — creek site was the winner; site #14 noted for rebooking" },
+        { "date": "May 24", "title": "Spring day-trip: tide pools", "detail": "Timed to low tide; became a bucket-list repeat" }
+      ],
+      "details": [
+        { "k": "Style", "v": "Car camping + 1–2 cabin weekends/yr" },
+        { "k": "Drive tolerance", "v": "2.5 hrs with kids" },
+        { "k": "Bucket list", "v": "Fall colors trip · snow cabin · coast tide pools (done ✓)" }
+      ],
+      "actions": [
+        { "label": "Plan an outing", "prompt": "/plan " },
+        { "label": "Trip debrief", "prompt": "trip debrief" }
+      ]
+    },
+    {
+      "id": "traditions-celebrations", "emoji": "🎄", "name": "Traditions & Gifts",
+      "status_line": "Nora's birthday prep opens Aug 22 · gift files warm",
+      "stats": [
+        { "value": "6", "label": "traditions protected", "sub": "next: state fair Sep" },
+        { "value": "Oct 17", "label": "Nora turns 7", "sub": "party prep opens Aug 22" },
+        { "value": "11", "label": "gift ideas banked", "sub": "across 4 people" }
+      ],
+      "upcoming": [
+        { "date": "Aug 22", "title": "Birthday prep window opens", "detail": "Theme + guest list first; venue shortlist ready that week" },
+        { "date": "Sep 5", "title": "State fair day", "detail": "Year 2 — officially a tradition if it lands again" }
+      ],
+      "recent": [
+        { "date": "Aug 1", "title": "Gift idea captured", "detail": "Theo → dinosaurs (3rd mention — flagged high-confidence)" },
+        { "date": "Jul 25", "title": "Tradition registry reviewed", "detail": "First-day-of-school photo ritual confirmed for Sep 2" }
+      ],
+      "history": [
+        { "date": "Jul 4", "title": "Neighborhood parade + BBQ", "detail": "Year 3 · kids' bike decorating remains the highlight" },
+        { "date": "Apr 12", "title": "Egg hunt v2", "detail": "Glow-in-the-dark twist worked — keep for next year" }
+      ],
+      "details": [
+        { "k": "Birthday style", "v": "Nora: friends party (~$250) · Theo: family day" },
+        { "k": "Gift budget", "v": "$60/kid holidays · grandparents coordinate via list" },
+        { "k": "Hosting", "v": "Thanksgiving here · December travels" }
+      ],
+      "actions": [
+        { "label": "Gift ideas for someone", "prompt": "gift ideas for " },
+        { "label": "Plan a birthday", "prompt": "/plan birthday" }
+      ]
+    }
+  ],
+  "available_modules": [
+    { "id": "budget-money", "emoji": "💰", "name": "Budget & Money", "blurb": "Bill calendar, subscription audits, sinking funds for the lumpy months." },
+    { "id": "health-fitness", "emoji": "💪", "name": "Health & Fitness", "blurb": "Workout blocks that get moved, not deleted — and checkups never overdue." },
+    { "id": "todos-projects", "emoji": "✅", "name": "To-Dos & Projects", "blurb": "One trusted list; projects broken down to 30-minute next actions." },
+    { "id": "relationships", "emoji": "❤️", "name": "Couple & 1:1 Time", "blurb": "Date nights with sitter logistics handled; rotating kid-dates." },
+    { "id": "home-maintenance", "emoji": "🔧", "name": "Home & Maintenance", "blurb": "Filters, batteries, gutters — batched into seasonal 2-hour blocks." },
+    { "id": "principles", "emoji": "🌟", "name": "Family Principles", "blurb": "Your family's values, drafted gently over weeks, then made visible." }
+  ]
+};
+/*FAMILY-OS-DATA-END*/
+</script>
+
+<div class="topbar" id="topbar">
+  <button class="menubtn" id="menubtn" aria-label="Open navigation">☰</button>
+  <b id="topbar-title">Family OS</b>
+</div>
+<div class="scrim" id="scrim"></div>
+
+<div class="app">
+  <aside class="side" id="side" aria-label="Navigation"></aside>
+  <main class="main" id="main"></main>
+</div>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  "use strict";
+  const D = window.FAMILY_OS_DATA || {};
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+  /* ── Accent color ── */
+  const ACCENTS = {
+    blue:    ["#2a78d6", "#5aa0f2"],
+    aqua:    ["#0e8f62", "#2ec78f"],
+    violet:  ["#4a3aa7", "#9085e9"],
+    magenta: ["#b83d74", "#e87ba4"],
+    orange:  ["#c94e1d", "#f07a4a"]
+  };
+  const avatarCfg = (D.assistant && D.assistant.avatar) || {};
+  function applyAccent() {
+    const dark = document.documentElement.dataset.theme === "dark" ||
+      (!document.documentElement.dataset.theme && matchMedia("(prefers-color-scheme: dark)").matches);
+    const pair = ACCENTS[avatarCfg.color] || null;
+    const hex = pair ? pair[dark ? 1 : 0] : (avatarCfg.color || "#2a78d6");
+    document.documentElement.style.setProperty("--accent", hex);
+  }
+
+  /* ── Theme toggle ── */
+  const savedTheme = localStorage.getItem("fos-theme");
+  if (savedTheme) document.documentElement.dataset.theme = savedTheme;
+  function toggleTheme() {
+    const cur = document.documentElement.dataset.theme ||
+      (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    const next = cur === "dark" ? "light" : "dark";
+    document.documentElement.dataset.theme = next;
+    localStorage.setItem("fos-theme", next);
+    applyAccent();
+    renderSide();
+  }
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", applyAccent);
+
+  /* ── Avatar (inline SVG, parameterized) ── */
+  function avatarSVG(size) {
+    const s = avatarCfg.style || "classic";
+    const acc = {
+      sprout: '<path d="M50 22 C50 15 49 11 46 7" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round"/>' +
+              '<path d="M47 12 Q45 3 35 3 Q37 13 47 12 Z" fill="var(--accent)"/>' +
+              '<path d="M49 10 Q52 2 61 4 Q57 12 49 10 Z" fill="var(--accent)" opacity=".75"/>',
+      spark:  '<path d="M50 22 L50 10" stroke="var(--accent)" stroke-width="3" stroke-linecap="round"/>' +
+              '<path d="M50 1 L52.4 6.4 L58 7 L53.8 10.8 L55.1 16 L50 13.2 L44.9 16 L46.2 10.8 L42 7 L47.6 6.4 Z" fill="var(--accent)"/>',
+      bow:    '<g transform="translate(68,14)"><path d="M0 0 L-13 -6 L-11 6 Z" fill="var(--accent)"/><path d="M0 0 L13 -6 L11 6 Z" fill="var(--accent)"/><circle r="3.6" fill="var(--accent)" stroke="var(--surface)" stroke-width="1.4"/></g>',
+      glasses:'', /* drawn with the face below */
+      classic:''
+    }[s] || "";
+    const glasses = s === "glasses"
+      ? '<circle cx="35" cy="58" r="11.5" fill="none" stroke="var(--ink)" stroke-width="2.6"/>' +
+        '<circle cx="65" cy="58" r="11.5" fill="none" stroke="var(--ink)" stroke-width="2.6"/>' +
+        '<path d="M46.5 58 Q50 55 53.5 58" fill="none" stroke="var(--ink)" stroke-width="2.6"/>'
+      : "";
+    return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 100 112" role="img" aria-label="' +
+      esc(D.assistant && D.assistant.name || "Assistant") + ' avatar">' +
+      acc +
+      '<rect x="8" y="22" width="84" height="80" rx="27" fill="color-mix(in oklab, var(--accent) 16%, var(--surface))" stroke="var(--accent)" stroke-width="3"/>' +
+      '<circle cx="35" cy="58" r="5.2" fill="var(--ink)"/><circle cx="37" cy="56" r="1.7" fill="var(--surface)"/>' +
+      '<circle cx="65" cy="58" r="5.2" fill="var(--ink)"/><circle cx="67" cy="56" r="1.7" fill="var(--surface)"/>' +
+      glasses +
+      '<path d="M39 73 Q50 83 61 73" fill="none" stroke="var(--ink)" stroke-width="4.2" stroke-linecap="round"/>' +
+      '<circle cx="24" cy="69" r="5.5" fill="var(--accent)" opacity=".28"/>' +
+      '<circle cx="76" cy="69" r="5.5" fill="var(--accent)" opacity=".28"/>' +
+      "</svg>";
+  }
+
+  /* ── Copy-to-clipboard bridge (works on file://) ── */
+  window.fosCopy = function (btn) {
+    const text = btn.getAttribute("data-prompt") || "";
+    const done = () => showToast('Copied "' + text.trim() + '" — paste it into Claude Code');
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopy(text, done));
+    } else fallbackCopy(text, done);
+  };
+  function fallbackCopy(text, done) {
+    const ta = document.createElement("textarea");
+    ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand("copy"); done(); } catch (e) { showToast("Copy failed — type it manually: " + text); }
+    document.body.removeChild(ta);
+  }
+  let toastTimer;
+  function showToast(msg) {
+    const t = $("toast"); t.textContent = msg; t.classList.add("show");
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show"), 2600);
+  }
+
+  /* ── Building blocks ── */
+  const promptBtn = (a, cls) =>
+    '<button type="button" class="btn ' + (cls || "ghost") + '" data-prompt="' + esc(a.prompt) +
+    '" onclick="fosCopy(this)">' + esc(a.label) + ' <span class="k">copy</span></button>';
+
+  function rowList(items, opts) {
+    opts = opts || {};
+    if (!items || !items.length)
+      return '<div class="empty">' + (opts.empty || "Nothing here yet — <b>this fills in after your first weekly review.</b>") + "</div>";
+    return '<div class="rows' + (opts.cls ? " " + opts.cls : "") + '">' + items.map((it) =>
+      '<div class="row">' +
+      '<span class="when">' + esc(it.date || "") + "</span>" +
+      '<span class="what"><b>' + esc(it.title || it.text || "") + "</b>" +
+      (it.detail ? '<div class="d">' + esc(it.detail) + "</div>" : "") + "</span>" +
+      (it.module ? '<span class="tag">' + esc(it.module) + "</span>" : "") +
+      "</div>").join("") + "</div>";
+  }
+
+  /* ── Sidebar ── */
+  function renderSide() {
+    const mods = D.modules || [];
+    const cur = location.hash || "#/home";
+    const link = (href, em, label) =>
+      '<a href="' + href + '"' + (cur === href ? ' aria-current="page"' : "") +
+      '><span class="em">' + em + "</span>" + esc(label) + "</a>";
+    const dark = document.documentElement.dataset.theme === "dark" ||
+      (!document.documentElement.dataset.theme && matchMedia("(prefers-color-scheme: dark)").matches);
+    $("side").innerHTML =
+      '<div class="brand">' + avatarSVG(44) +
+      '<div class="who"><b>' + esc(D.assistant && D.assistant.name || "Your assistant") + "</b><span>" +
+      esc(D.family_name || "") + "</span></div></div>" +
+      '<nav class="nav">' + link("#/home", "🏠", "Home") + "</nav>" +
+      '<div class="navlabel">Capabilities</div>' +
+      '<nav class="nav">' +
+      mods.map((m) => link("#/m/" + m.id, m.emoji, m.name)).join("") +
+      ((D.available_modules || []).length ? link("#/add", "＋", "Add capabilities") : "") +
+      "</nav>" +
+      '<div class="foot">' +
+      '<button type="button" class="themebtn" id="themebtn">' + (dark ? "☀️ Light mode" : "🌙 Dark mode") + "</button>" +
+      '<div class="meta">Updated ' + esc(D.generated || "—") + "<br>Refresh: <b>/dashboard</b> in Claude Code</div>" +
+      "</div>";
+    $("themebtn").addEventListener("click", toggleTheme);
+    $("side").querySelectorAll("a").forEach((a) => a.addEventListener("click", closeDrawer));
+  }
+
+  /* ── Pages ── */
+  function pageHome() {
+    const h = D.home || {};
+    const name = (D.assistant && D.assistant.name) || "Your assistant";
+    let html = "";
+    if (D.demo) html +=
+      '<div class="demo-banner">👋 <span><b>Sample data.</b> This is a preview with a fictional family. ' +
+      "Run <b>/setup</b> in Claude Code, then <b>/dashboard</b> to see yours.</span></div>";
+    html +=
+      '<div class="hero"><div class="avatar-lg">' + avatarSVG(104) + "</div>" +
+      '<div class="hi"><h1>Hi, I’m ' + esc(name) + " 👋</h1>" +
+      '<p class="sub">' + esc((D.assistant && D.assistant.tagline) || "Your family's chief of staff") +
+      " for " + esc(D.family_name || "your family") + "</p>" +
+      '<div class="chips">' +
+      '<span class="chip"><span class="dot"></span>Next review: ' + esc(D.next_review || "not set") + "</span>" +
+      '<span class="chip">📥 ' + esc(D.inbox_count == null ? "0" : D.inbox_count) + " in inbox</span>" +
+      "</div>" +
+      '<div class="quick">' + (D.quick_actions || []).map((a, i) => promptBtn(a, i === 0 ? "primary" : "ghost")).join("") + "</div>" +
+      "</div></div>";
+    if (h.headline) html += '<p class="sub" style="margin-top:10px">' + esc(h.headline) + "</p>";
+
+    if (h.needs_attention && h.needs_attention.length) {
+      html += '<div class="section"><h2>⏳ Needs a decision <span class="cnt">' + h.needs_attention.length + "</span></h2>" +
+        '<div class="card attn"><div class="rows">' +
+        h.needs_attention.map((n) =>
+          '<div class="row">' +
+          '<span class="stat-dot" style="background:var(--' + (n.severity === "serious" ? "serious" : "warning") + ')"></span>' +
+          '<span class="what"><span class="sev ' + esc(n.severity || "warning") + '">' +
+          (n.severity === "serious" ? "time-sensitive" : "coming up") + "</span> · <b>" + esc(n.title) + "</b>" +
+          '<div class="d">' + esc(n.deadline || "") + (n.action ? " — " + esc(n.action) : "") + "</div>" +
+          (n.prompt ? '<div style="margin-top:7px">' + promptBtn({ label: "Ask " + name, prompt: n.prompt }) + "</div>" : "") +
+          "</span></div>").join("") +
+        "</div></div></div>";
+    }
+
+    html += '<div class="section"><h2>🗓️ Up next</h2><div class="card">' +
+      rowList(h.up_next, { empty: "No upcoming plans yet — <b>run /weekly-review to build your first two weeks.</b>" }) +
+      "</div></div>";
+
+    html += '<div class="section"><h2>🌱 Pillar health</h2><div class="pillars">' +
+      (h.pillars || []).map((p) => {
+        const cls = p.status === "healthy" ? "healthy" : p.status === "attention" ? "attention" : "quiet";
+        const word = p.status === "healthy" ? "healthy" : p.status === "attention" ? "attention" : "quiet";
+        return '<div class="pillar ' + cls + '"><div class="top"><span class="dot"></span>' + esc(p.name) +
+          '<span class="st">' + word + "</span></div>" +
+          (p.note ? '<div class="note">' + esc(p.note) + "</div>" : "") + "</div>";
+      }).join("") + "</div></div>";
+
+    html += '<div class="section"><h2>🕘 Recently</h2><div class="card feed">' +
+      rowList((h.recent || []).map((r) => ({ date: r.date, title: r.text })), { empty: "Activity will appear here as we work together." }) +
+      "</div></div>";
+    return html;
+  }
+
+  function pageModule(m) {
+    let html = "";
+    if (D.demo) html += '<div class="demo-banner">👋 <b>Sample data</b> — a fictional family for preview.</div>';
+    html += '<div class="modhead"><div class="bigem">' + m.emoji + "</div><div><h1>" + esc(m.name) + "</h1>" +
+      '<p class="sub">' + esc(m.status_line || "") + "</p></div></div>";
+    if (m.actions && m.actions.length)
+      html += '<div class="quick" style="margin-top:16px">' + m.actions.map((a, i) => promptBtn(a, i === 0 ? "primary" : "ghost")).join("") + "</div>";
+    if (m.stats && m.stats.length)
+      html += '<div class="stats">' + m.stats.map((s) =>
+        '<div class="stat"><div class="v">' + esc(s.value) + '</div><div class="l">' + esc(s.label) + "</div>" +
+        (s.sub ? '<div class="s">' + esc(s.sub) + "</div>" : "") + "</div>").join("") + "</div>";
+    html += '<div class="section grid2">' +
+      '<div class="card"><h2>🗓️ Upcoming</h2>' + rowList(m.upcoming) + "</div>" +
+      '<div class="card"><h2>🕘 Recent</h2>' + rowList(m.recent, { empty: "No activity yet — <b>it shows up here as we go.</b>" }) + "</div>" +
+      "</div>";
+    if (m.details && m.details.length)
+      html += '<div class="section"><div class="card"><h2>📌 Details</h2><div class="kv">' +
+        m.details.map((d) => '<span class="k">' + esc(d.k) + '</span><span class="v">' + esc(d.v) + "</span>").join("") +
+        "</div></div></div>";
+    html += '<details class="past"><summary><span class="tw">▸</span>View past activity' +
+      (m.history && m.history.length ? ' <span class="cnt">' + m.history.length + "</span>" : "") +
+      '</summary><div class="inner">' +
+      rowList(m.history, { empty: "History accumulates here after each review." }) + "</div></details>";
+    return html;
+  }
+
+  function pageAdd() {
+    const name = (D.assistant && D.assistant.name) || "your assistant";
+    return "<h1>Add capabilities</h1>" +
+      '<p class="sub">Copy a prompt, paste it to ' + esc(name) + " in Claude Code, and it'll ask a few setup questions.</p>" +
+      '<div class="section addgrid">' +
+      (D.available_modules || []).map((m) =>
+        '<div class="card addcard"><div class="h"><span style="font-size:20px">' + m.emoji + "</span>" + esc(m.name) + "</div>" +
+        '<div class="b">' + esc(m.blurb || "") + "</div>" +
+        promptBtn({ label: "Enable " + m.name, prompt: "enable " + m.id }) + "</div>").join("") +
+      "</div>";
+  }
+
+  /* ── Router ── */
+  function render() {
+    const hash = location.hash || "#/home";
+    let html, title = "Home";
+    const mMatch = hash.match(/^#\/m\/(.+)$/);
+    if (mMatch) {
+      const mod = (D.modules || []).find((x) => x.id === mMatch[1]);
+      if (mod) { html = pageModule(mod); title = mod.name; }
+      else { html = pageHome(); title = "Home"; }
+    } else if (hash === "#/add") { html = pageAdd(); title = "Add capabilities"; }
+    else { html = pageHome(); }
+    $("main").innerHTML = html;
+    $("topbar-title").textContent = title === "Home" ? ((D.assistant && D.assistant.name) || "Family OS") : title;
+    renderSide();
+    window.scrollTo(0, 0);
+  }
+  window.addEventListener("hashchange", render);
+
+  /* ── Mobile drawer ── */
+  function closeDrawer() { $("side").classList.remove("open"); $("scrim").classList.remove("show"); }
+  $("menubtn").addEventListener("click", () => { $("side").classList.add("open"); $("scrim").classList.add("show"); });
+  $("scrim").addEventListener("click", closeDrawer);
+
+  /* ── Boot ── */
+  applyAccent();
+  document.title = ((D.assistant && D.assistant.name) || "Family OS") + " — Dashboard";
+  render();
+})();
+</script>
+</body>
+</html>

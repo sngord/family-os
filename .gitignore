@@ -4,6 +4,7 @@ systems/
 logs/
 plans/
 inbox.md
+dashboard/dashboard.html
 
 # Generated calendar exports
 *.ics

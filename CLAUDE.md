@@ -56,8 +56,10 @@ across all of them and flag any that have gone quiet for a month or more.
 CLAUDE.md          ← this manual (generic — never personalize it)
 SETUP.md           ← first-run interview script
 README.md          ← install/share instructions for humans
+INTEGRATIONS.md    ← optional connectors (calendar, email…) + their fallbacks
 capabilities/      ← module specs; read only the enabled ones
 templates/         ← file shapes to copy when creating personal files
+dashboard/         ← template.html (generic) → dashboard.html (personal, gitignored)
 inbox.md           ← quick capture (personal, gitignored)
 family/            ← (personal) config.md, profile.md, vision.md, principles.md
 systems/           ← (personal) calendar-cadences.md + one file per module
@@ -120,6 +122,11 @@ unless they say **"do this now."**
 - `/plan ‹thing›` → plan it end-to-end: 2–3 options, a clear recommendation,
   booking checklist, calendar entries. Save work-in-progress under `plans/`.
 - `/meal-cycle` → next biweekly menu + consolidated grocery list (Meals module).
+- `/dashboard` → re-render `dashboard/dashboard.html` from the current files
+  per `dashboard/README.md`. Also regenerate it silently after every weekly
+  review and any meaningful plan change — the visual view must never go stale.
+- `/connect` → set up or test integrations per `INTEGRATIONS.md`, recording
+  status under `integrations:` in `family/config.md`.
 - `"find ‹X› near us"` → research local options (web search if available), return
   a shortlist with tradeoffs and a recommended next action — never a homework
   assignment.
@@ -137,6 +144,11 @@ unless they say **"do this now."**
   items, set proper recurrence and add **prep tasks as their own earlier
   reminders**. Put logistics (address, confirmation #, what to bring) in the
   event description. Batch a week's approved events into one action.
+
+Beyond calendar and email, `INTEGRATIONS.md` is the roster: what each connector
+unlocks, how to wire it, and its fallback. Check `integrations:` in
+`family/config.md` before assuming a connector exists; when a `pending` one
+would help the task at hand, offer `/connect`.
 
 ## 7. Guardrails
 
@@ -159,6 +171,8 @@ unless they say **"do this now."**
 ## 8. Maintaining the system
 
 - Keep files tidy and current — they are the family's memory.
+- Keep the dashboard alive: after each weekly review or meaningful change,
+  quietly re-render `dashboard/dashboard.html` (spec: `dashboard/README.md`).
 - Once a month (fold into a weekly review), do a quick system-health check: stale
   statuses, cadences that no longer fit the kids' ages, files growing messy.
 - Template updates: because personal files are gitignored, `git pull` on this

@@ -19,9 +19,9 @@ There's no app and no database. It's markdown files plus an operating manual (`C
 2. **Get this folder** — `git clone` this repo, or click **Code → Download ZIP** and unzip it anywhere.
 3. **Open the folder in Claude Code** (run `claude` inside it, or open it in the desktop app).
 4. Type **`/setup`** (or just say *"set up my assistant"*).
-5. Answer a short interview: name your assistant, pick capabilities, share family details. 10–15 minutes, asked in small batches, skip anything you like.
+5. Answer a short interview: name your assistant (and pick its avatar), choose capabilities, share family details, and optionally connect integrations like Google Calendar & Gmail — guided, with graceful fallbacks if you skip. 10–15 minutes, asked in small batches.
 
-That's it. Your assistant builds its own memory files and proposes your first weekly review.
+That's it. Your assistant builds its own memory files, renders your dashboard, and proposes your first weekly review.
 
 ## What it can manage
 
@@ -53,14 +53,31 @@ Full specs live in [`capabilities/`](capabilities/).
 | `/status` | One-screen dashboard: scheduled, pending, at risk of slipping |
 | `/plan ‹thing›` | Fully plans a trip, party, or date night: options, a recommendation, bookings, calendar entries |
 | `/meal-cycle` | Next 2 weeks of dinners + one consolidated grocery list |
+| `/dashboard` | Re-renders your visual dashboard (see below) |
+| `/connect` | Set up or test integrations (Google Calendar, Gmail, …) |
 | *"do this now: …"* | Skips the inbox and acts immediately |
 
 The magic is the **lead-time engine**: every recurring event stores *how far in advance prep must start* (campsites: months; summer camp: registration morning; Halloween costumes: 3 weeks). Each weekly review computes which prep windows just opened — so you're always ahead without tracking anything.
 
+## The dashboard
+
+Prefer a visual home base over chat and files? Open **`dashboard/dashboard.html`**
+in any browser: your assistant's friendly avatar greets you on a home page with
+what needs a decision, the next two weeks, and the health of every family pillar
+— plus a page per capability showing upcoming plans, recent activity, and a
+view-past drawer. Every button copies a ready-to-paste prompt, so the dashboard
+and Claude Code stay one thought apart.
+
+It's a single offline HTML file — no server, no accounts, nothing external.
+Your assistant re-renders it after every weekly review (or on `/dashboard`),
+and the rendered copy is gitignored like the rest of your personal data. Want a
+peek right now? Double-click `dashboard/template.html` to tour it with a
+fictional sample family, in light or dark mode.
+
 ## Your data & privacy
 
 - Everything is local plain text. Nothing syncs anywhere unless you connect it.
-- All personal files (`family/`, `systems/`, `logs/`, `plans/`, `inbox.md`) are **gitignored** — you can keep this folder as a git repo, pull template updates, even fork publicly, without ever committing family data.
+- All personal files (`family/`, `systems/`, `logs/`, `plans/`, `inbox.md`, and your rendered dashboard) are **gitignored** — you can keep this folder as a git repo, pull template updates, even fork publicly, without ever committing family data.
 - Calendar/email access is optional, via connectors you control, and the assistant confirms before creating events or sending anything.
 - The assistant never handles passwords, card numbers, or money movement.
 
