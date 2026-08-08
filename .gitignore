@@ -13,6 +13,7 @@ dashboard/dashboard.html
 .DS_Store
 Thumbs.db
 
-# Local Claude Code state (keep .claude/commands tracked)
+# Local agent state (shipped commands/rules stay tracked)
 .claude/*
 !.claude/commands/
+.cursor/mcp.json

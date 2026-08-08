@@ -1,6 +1,7 @@
 # family/config.md — created by setup. Personal; gitignored.
 # The assistant reads this at boot. CLAUDE.md itself is never personalized.
 
+agent:               # claude-code | cursor | other — asked at Phase 0
 assistant_name:
 family_name:
 location:            # city/area — used for local research, never full address

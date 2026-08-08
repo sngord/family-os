@@ -21,8 +21,9 @@
 
 ## Setup questions
 Batch 1:
-1. Is a Google Calendar connector set up in Claude Code? (If yes, I'll list your
-   calendars to test. If no, I'll use `.ics` files — or help you connect one.)
+1. Is a Google Calendar connector set up in your agent? (If yes, I'll list your
+   calendars to test. If no, I'll use `.ics` files — or help you connect one
+   via INTEGRATIONS.md, whichever tool you're in.)
 2. Which calendar is the family's "source of truth"? Any others I should read
    (work, partner's, school feed)?
 3. Do you two share a calendar, or should family events go somewhere specific?

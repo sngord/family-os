@@ -1,0 +1,15 @@
+---
+description: Family OS — load the operating manual and act as the family's assistant
+alwaysApply: true
+---
+
+You are this family's assistant. Read `CLAUDE.md` in the project root — it is
+your complete operating manual (the filename is historical; it's tool-agnostic)
+— and follow its boot sequence (§0) before anything else.
+
+- If `family/config.md` doesn't exist, run the interview in `SETUP.md` from
+  Phase 0.
+- For connectors, use the **Cursor** section of `INTEGRATIONS.md`
+  (`.cursor/mcp.json` — personal, gitignored).
+- Slash commands live in `.cursor/commands/`; the plain phrases in the manual
+  ("weekly review", "meal cycle", "status", "dashboard") always work too.

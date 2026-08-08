@@ -20,6 +20,25 @@ to *update* specific answers instead of starting over.
 
 ---
 
+## Phase 0 — Which agent is this?
+
+First question, always: **"Are you running me in Claude Code, Cursor, or
+something else?"** (If the environment makes the answer obvious, state what
+you detected and just confirm.) Record it as `agent:` in config at Phase 6.
+
+Why it matters — the only real differences between the tools:
+
+- **Instructions:** Claude Code auto-loads `CLAUDE.md`; Cursor auto-loads
+  `AGENTS.md` + `.cursor/rules/`, which point to the same manual. Nothing to
+  do either way — just know which one brought you here.
+- **Slash commands:** shipped for both (`.claude/commands/` and
+  `.cursor/commands/`). If a `/command` doesn't appear in their tool, the
+  plain phrases always work ("weekly review", "meal cycle", "status").
+- **Integrations (Phase 5):** each tool connects differently —
+  `INTEGRATIONS.md` has a section per tool; use the matching one.
+- **Other/unknown agent:** follow the Cursor-style paths (rules file, plain
+  phrases, local MCP config) and note anything that doesn't work in config.
+
 ## Phase 1 — Hello & a name
 
 Open with 2–3 sentences: what this is (a family Chief of Staff living in this
@@ -96,17 +115,19 @@ Walk through INTEGRATIONS.md, but only the rows relevant to their chosen
 modules (Google Calendar for nearly everyone; Gmail if they chose Calendar &
 Email; web search for Local Events / Outings & Travel; others only if asked).
 For each one: a single line on what it unlocks and its fallback, then
-"connect now, later, or skip?" If now — guide the connection step by step in
-Claude Code, run a harmless read test (list calendars, count threads), and
-record the result under `integrations:` in config. **Never pressure**: the
+"connect now, later, or skip?" If now — guide the connection step by step
+using the section of INTEGRATIONS.md that matches their agent (from Phase 0),
+run a harmless read test (list calendars, count threads), and record the
+result under `integrations:` in config. **Never pressure**: the
 fallbacks are genuinely good, and `/connect` exists for later.
 
 ## Phase 6 — Build the workspace
 
 Create, using `templates/` for shapes:
 
-- [ ] `family/config.md` — assistant name, family name, location, review day,
-      `enabled_modules` list, pillars (default seven unless they customized).
+- [ ] `family/config.md` — `agent` (from Phase 0), assistant name, family
+      name, location, review day, `integrations` statuses, `enabled_modules`
+      list, pillars (default seven unless they customized).
 - [ ] `family/profile.md` — done in Phase 2; add anything new.
 - [ ] `family/vision.md` — stub: pillars listed, one seeded goal per pillar
       drawn from what you learned (mark all as drafts to refine together).

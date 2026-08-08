@@ -37,8 +37,10 @@ fresh so staleness is visible.
   friendly empty state — that's better than invented content.
 - Bound the payload: ≤ 8 `up_next`, ≤ 5 `needs_attention`, ≤ 6 per module
   `upcoming`/`recent`, ≤ 10 per module `history`, ≤ 8 home `recent`.
-- Every `prompt` string must be something the family can paste into Claude
-  Code as-is (a slash command or a natural phrase the assistant understands).
+- Every `prompt` string must be something the family can paste into their
+  agent as-is (a slash command or a natural phrase the assistant understands).
+- Set `agent` to the display label matching config (`"Claude Code"` or
+  `"Cursor"`) — the UI uses it in its "paste into …" copy.
 
 ## Schema
 
@@ -46,6 +48,8 @@ fresh so staleness is visible.
 {
   "demo": false,
   "generated": "Sunday, Aug 9 · 8:02 PM",       // when this render happened
+  "agent": "Claude Code",                        // display label from config `agent:` —
+                                                 // "Claude Code" or "Cursor"; used in UI copy
   "assistant": {
     "name": "…",                                 // from family/config.md
     "tagline": "Your family's chief of staff",

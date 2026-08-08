@@ -1,6 +1,6 @@
 # Family OS
 
-**A world-class family assistant that runs in [Claude Code](https://claude.com/claude-code) — powered by nothing but a folder of plain-text files.**
+**A world-class family assistant that runs in [Claude Code](https://claude.com/claude-code) or [Cursor](https://cursor.com) — powered by nothing but a folder of plain-text files.**
 
 You do two small things:
 
@@ -15,10 +15,10 @@ There's no app and no database. It's markdown files plus an operating manual (`C
 
 ## Quick start
 
-1. **Install Claude Code** → [claude.com/claude-code](https://claude.com/claude-code)
+1. **Install your agent** — [Claude Code](https://claude.com/claude-code) or [Cursor](https://cursor.com). Both are fully supported.
 2. **Get this folder** — `git clone` this repo, or click **Code → Download ZIP** and unzip it anywhere.
-3. **Open the folder in Claude Code** (run `claude` inside it, or open it in the desktop app).
-4. Type **`/setup`** (or just say *"set up my assistant"*).
+3. **Open the folder in your agent** (Claude Code: run `claude` inside it or open it in the desktop app · Cursor: File → Open Folder, then open the Agent chat).
+4. Type **`/setup`** (or just say *"set up my assistant"*). The very first question confirms which agent you're in, so every later step fits your tool.
 5. Answer a short interview: name your assistant (and pick its avatar), choose capabilities, share family details, and optionally connect integrations like Google Calendar & Gmail — guided, with graceful fallbacks if you skip. 10–15 minutes, asked in small batches.
 
 That's it. Your assistant builds its own memory files, renders your dashboard, and proposes your first weekly review.
@@ -57,6 +57,8 @@ Full specs live in [`capabilities/`](capabilities/).
 | `/connect` | Set up or test integrations (Google Calendar, Gmail, …) |
 | *"do this now: …"* | Skips the inbox and acts immediately |
 
+Slash commands ship for both agents (`.claude/commands/` and `.cursor/commands/`); if one ever doesn't appear in your tool, the plain phrases — "weekly review", "meal cycle", "status" — always work.
+
 The magic is the **lead-time engine**: every recurring event stores *how far in advance prep must start* (campsites: months; summer camp: registration morning; Halloween costumes: 3 weeks). Each weekly review computes which prep windows just opened — so you're always ahead without tracking anything.
 
 ## The dashboard
@@ -66,7 +68,7 @@ in any browser: your assistant's friendly avatar greets you on a home page with
 what needs a decision, the next two weeks, and the health of every family pillar
 — plus a page per capability showing upcoming plans, recent activity, and a
 view-past drawer. Every button copies a ready-to-paste prompt, so the dashboard
-and Claude Code stay one thought apart.
+and your agent stay one thought apart.
 
 It's a single offline HTML file — no server, no accounts, nothing external.
 Your assistant re-renders it after every weekly review (or on `/dashboard`),
@@ -83,7 +85,7 @@ fictional sample family, in light or dark mode.
 
 ## Optional: connect Google Calendar & Gmail
 
-In Claude Code, add the Google Calendar and Gmail connectors (or any MCP server you prefer). No connector? The assistant generates `.ics` files you import into any calendar in one click.
+Claude Code and Cursor each have their own path — [INTEGRATIONS.md](INTEGRATIONS.md) covers both (hosted connectors vs. `.cursor/mcp.json`), and setup walks you through whichever applies. No connector? The assistant generates `.ics` files you import into any calendar in one click.
 
 ## Make it yours
 

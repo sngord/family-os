@@ -276,6 +276,7 @@
 window.FAMILY_OS_DATA = {
   "demo": true,
   "generated": "Sunday, Aug 2 · 7:58 PM",
+  "agent": "Claude Code",
   "assistant": { "name": "Birdie", "tagline": "Your family's chief of staff", "avatar": { "style": "sprout", "color": "aqua" } },
   "family_name": "The Harper Family",
   "next_review": "Sunday · 7:30 PM",
@@ -535,6 +536,7 @@ window.FAMILY_OS_DATA = {
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g,
     (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const AGENT = esc(D.agent || "Claude Code");
 
   /* ── Accent color ── */
   const ACCENTS = {
@@ -601,7 +603,7 @@ window.FAMILY_OS_DATA = {
   /* ── Copy-to-clipboard bridge (works on file://) ── */
   window.fosCopy = function (btn) {
     const text = btn.getAttribute("data-prompt") || "";
-    const done = () => showToast('Copied "' + text.trim() + '" — paste it into Claude Code');
+    const done = () => showToast('Copied "' + text.trim() + '" — paste it into ' + AGENT);
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopy(text, done));
     } else fallbackCopy(text, done);
@@ -658,7 +660,7 @@ window.FAMILY_OS_DATA = {
       "</nav>" +
       '<div class="foot">' +
       '<button type="button" class="themebtn" id="themebtn">' + (dark ? "☀️ Light mode" : "🌙 Dark mode") + "</button>" +
-      '<div class="meta">Updated ' + esc(D.generated || "—") + "<br>Refresh: <b>/dashboard</b> in Claude Code</div>" +
+      '<div class="meta">Updated ' + esc(D.generated || "—") + "<br>Refresh: <b>/dashboard</b> in " + AGENT + "</div>" +
       "</div>";
     $("themebtn").addEventListener("click", toggleTheme);
     $("side").querySelectorAll("a").forEach((a) => a.addEventListener("click", closeDrawer));
@@ -671,7 +673,7 @@ window.FAMILY_OS_DATA = {
     let html = "";
     if (D.demo) html +=
       '<div class="demo-banner">👋 <span><b>Sample data.</b> This is a preview with a fictional family. ' +
-      "Run <b>/setup</b> in Claude Code, then <b>/dashboard</b> to see yours.</span></div>";
+      "Run <b>/setup</b> in " + AGENT + ", then <b>/dashboard</b> to see yours.</span></div>";
     html +=
       '<div class="hero"><div class="avatar-lg">' + avatarSVG(104) + "</div>" +
       '<div class="hi"><h1>Hi, I’m ' + esc(name) + " 👋</h1>" +
@@ -747,7 +749,7 @@ window.FAMILY_OS_DATA = {
   function pageAdd() {
     const name = (D.assistant && D.assistant.name) || "your assistant";
     return "<h1>Add capabilities</h1>" +
-      '<p class="sub">Copy a prompt, paste it to ' + esc(name) + " in Claude Code, and it'll ask a few setup questions.</p>" +
+      '<p class="sub">Copy a prompt, paste it to ' + esc(name) + " in " + AGENT + ", and it'll ask a few setup questions.</p>" +
       '<div class="section addgrid">' +
       (D.available_modules || []).map((m) =>
         '<div class="card addcard"><div class="h"><span style="font-size:20px">' + m.emoji + "</span>" + esc(m.name) + "</div>" +

@@ -10,17 +10,40 @@ The assistant's rules, regardless of integration:
 - It confirms before writing to a calendar or drafting anything.
 - It never sends email, moves money, or submits forms on its own.
 
-## How connecting works in Claude Code
+## How connecting works
 
-Integrations are **connectors** (MCP servers) added to Claude Code:
+Integrations are **MCP servers / connectors** added to your agent. Use the
+path for the tool you're running — setup asks at Phase 0 and records it in
+`family/config.md`.
+
+### Claude Code
 
 - **Desktop app:** Settings → Connectors (or Extensions) → add Google
   Calendar / Gmail / others → approve the sign-in in your browser.
 - **CLI:** `claude mcp add ‹name›` — or a project `.mcp.json` for advanced
   setups.
-- Menus move between versions — if you can't find it, just ask your
-  assistant: *"walk me through connecting Google Calendar"* and it will guide
-  you against the current docs.
+
+### Cursor
+
+- **Settings → MCP** (Tools & Integrations) → add a server there, or create
+  **`.cursor/mcp.json`** in this folder — it's already gitignored, because
+  it's personal. Community example for Google Calendar:
+
+```json
+{
+  "mcpServers": {
+    "gcal": { "command": "npx", "args": ["-y", "@cocal/google-calendar-mcp"] }
+  }
+}
+```
+
+- First use opens a Google sign-in in your browser; tokens stay on your
+  machine. Gmail and others work the same way via community MCP servers — ask
+  your assistant to find a well-maintained one and wire it up.
+
+Menus move between versions in both tools — if you can't find something, just
+ask your assistant: *"walk me through connecting Google Calendar"* and it will
+guide you against the current docs.
 
 After connecting, tell your assistant to **test it** — it will do a harmless
 read (list calendars, count unread threads) and record the result in
@@ -35,7 +58,7 @@ read (list calendars, count unread threads) and record the result in
 | **Web search / browsing** | Live research: local events, campsite availability, league registration dates, venue details | Assistant tells you exactly what to look up and drafts the query |
 | **Google Drive** | Reads/writes shared family docs (school forms, packing lists you keep there) | Files live in this folder instead |
 | **Grocery (Instacart etc.)** | Usually **no connector needed** — the meal module outputs a paste-ready list; you stay in control of the cart | That *is* the design |
-| **Anything else** | Claude Code has a growing connector directory (task apps, notes, smart home). If it helps a module, your assistant can check whether a trusted connector exists | Ask: *"is there a connector for ‹X›?"* |
+| **Anything else** | Both agents tap the growing MCP ecosystem (task apps, notes, smart home). If it helps a module, your assistant can check whether a trusted server exists | Ask: *"is there a connector for ‹X›?"* |
 
 **A note on trust:** only add connectors from sources you trust — they act
 with your accounts' permissions. When in doubt, skip it; the fallbacks are
